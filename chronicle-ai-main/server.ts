@@ -4,6 +4,8 @@ import { createServer as createViteServer } from "vite";
 import { AIReasoningService } from "./src/services/aiReasoningService";
 import { initSlackAgent, getSlackStatus } from "./src/services/slackAgent";
 import { generateEnterpriseDemoData } from "./src/services/demoGenerator";
+import { CONNECTORS, DEFAULT_CONNECTED } from "./src/connectors/catalog";
+import { runAgent, AgentRun } from "./src/services/agentService";
 
 const startTime = Date.now();
 
@@ -433,6 +435,94 @@ async function startServer() {
   });
 
 
+  // ============================================================
+  // AgentOS — Cross-app action agent endpoints
+  // ============================================================
+
+  // In-memory integration connection state (seeded with sensible defaults).
+  const connectedApps = new Set<string>(DEFAULT_CONNECTED);
+  // In-memory cross-app action activity + agent run history.
+  const agentRuns: AgentRun[] = [];
+  interface ActivityRecord {
+    id: string;
+    app_id: string;
+    app_name: string;
+    action: string;
+    result: string;
+    status: string;
+    link?: string;
+    goal: string;
+    time: string;
+  }
+  const activityLog: ActivityRecord[] = [];
+
+  // List all connectors from the catalog + their connection status.
+  app.get("/api/integrations", (req, res) => {
+    res.json(
+      CONNECTORS.map((c) => ({
+        id: c.id,
+        name: c.name,
+        category: c.category,
+        color: c.color,
+        icon: c.icon,
+        description: c.description,
+        liveCapable: !!c.liveCapable,
+        actionCount: c.actions.length,
+        connected: connectedApps.has(c.id),
+      }))
+    );
+  });
+
+  // Toggle / set a connector's connection state.
+  app.post("/api/integrations/:id", (req, res) => {
+    const { id } = req.params;
+    const exists = CONNECTORS.some((c) => c.id === id);
+    if (!exists) return res.status(404).json({ error: "Unknown integration" });
+    const connect = typeof req.body?.connected === "boolean" ? req.body.connected : !connectedApps.has(id);
+    if (connect) connectedApps.add(id);
+    else connectedApps.delete(id);
+    res.json({ id, connected: connectedApps.has(id) });
+  });
+
+  // Run the agent: plan a cross-app workflow for a goal, then execute it.
+  app.post("/api/agent/run", async (req, res) => {
+    const goal = (req.body?.goal || "").toString().trim();
+    if (!goal) return res.status(400).json({ error: "A goal is required." });
+    try {
+      const connectedIds = Array.from(connectedApps);
+      const run = await runAgent(goal, connectedIds);
+      agentRuns.unshift(run);
+      // Fan run steps into the activity log.
+      run.steps.forEach((s) => {
+        activityLog.unshift({
+          id: `${run.id}-${activityLog.length}-${Math.random().toString(36).slice(2, 6)}`,
+          app_id: s.app_id,
+          app_name: s.app_name,
+          action: s.action_label,
+          result: s.result,
+          status: s.status,
+          link: s.link,
+          goal: run.goal,
+          time: s.finished_at,
+        });
+      });
+      res.json(run);
+    } catch (error: any) {
+      console.error("[AgentOS] Agent run failed:", error);
+      res.status(500).json({ error: error.message || "Agent run failed" });
+    }
+  });
+
+  // Agent run history.
+  app.get("/api/agent/runs", (req, res) => {
+    res.json(agentRuns.slice(0, 25));
+  });
+
+  // Cross-app activity feed.
+  app.get("/api/activity", (req, res) => {
+    res.json(activityLog.slice(0, 100));
+  });
+
   // Serve Vite in development, static in production
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
@@ -449,7 +539,7 @@ async function startServer() {
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`[Chronicle AI] Chronicle AI running on port ${PORT}`);
+    console.log(`[AgentOS] AgentOS running on port ${PORT} — cross-app action agent online`);
   });
 }
 
