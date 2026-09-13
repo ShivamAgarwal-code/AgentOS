@@ -1,0 +1,31 @@
+# Render Blueprint for AgentOS
+# One persistent Node web service that serves both the built React frontend
+# and the Express API (+ optional live Slack agent) from a single process.
+#
+# Deploy: Render Dashboard -> New -> Blueprint -> pick this repo.
+# Render injects PORT automatically; the server binds to it on 0.0.0.0.
+#
+# NODE_ENV is set in startCommand (not as an env var) so that `npm install`
+# during build still installs devDependencies (vite, esbuild, tsx) - setting
+# NODE_ENV=production globally would make npm skip them and break the build.
+services:
+  - type: web
+    name: agentos
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: NODE_ENV=production node dist/server.cjs
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      # Required for the real Claude planner. Without it, AgentOS falls back to
+      # the built-in heuristic planner and still runs.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ANTHROPIC_MODEL
+        value: claude-opus-4-8
+      # Optional - enables LIVE Slack message execution.
+      - key: SLACK_BOT_TOKEN
+        sync: false
+      - key: SLACK_SIGNING_SECRET
+        sync: false

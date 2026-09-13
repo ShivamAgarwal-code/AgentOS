@@ -38,6 +38,7 @@ No dashboards to wire together, no scripts to write - just say what you want don
 - [The 23 connected apps](#-the-23-connected-apps)
 - [Tech stack](#-tech-stack)
 - [Getting started](#-getting-started)
+- [Deployment](#-deployment)
 - [Environment variables](#-environment-variables)
 - [Project structure](#-project-structure)
 - [API reference](#-api-reference)
@@ -144,6 +145,30 @@ That's it - one command runs the Express API, the Vite dev server, and the Slack
 npm run build   # vite build + esbuild bundle
 npm run start   # node dist/server.cjs
 ```
+
+---
+
+## ☁️ Deployment
+
+AgentOS is a single persistent Node service (the Express server serves both the
+built frontend and the API), so a persistent host is the right fit.
+
+**Recommended: Render** - deploys the whole app as one web service. This repo
+ships a `render.yaml` blueprint:
+
+1. Push to GitHub.
+2. Render Dashboard -> **New +** -> **Blueprint** -> pick this repo -> **Apply**.
+3. Set `ANTHROPIC_API_KEY` (optional; heuristic fallback runs without it).
+
+Build Command `npm install && npm run build`, Start Command
+`NODE_ENV=production node dist/server.cjs`, health check `/api/health`.
+
+**Vercel** works too, but its serverless model does not keep the in-memory
+state or the Slack receiver alive - use it only for a frontend-on-Vercel /
+API-on-Render split.
+
+Full step-by-step (both platforms, env vars, verification) is in
+[`DEPLOY.md`](./DEPLOY.md).
 
 ---
 
