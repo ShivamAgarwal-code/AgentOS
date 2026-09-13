@@ -142,8 +142,7 @@ export default function Sidebar({ activePage, setActivePage, collapsed = false, 
               <BookOpen className="w-3.5 h-3.5" />
               <span>documentation</span>
             </a>
-            <div id="version-display" className="px-3 py-1 flex items-center justify-between text-[10px] text-coal-400 dark:text-coal-600 font-mono">
-              <span>Powered by Claude</span>
+            <div id="version-display" className="px-3 py-1 flex items-center justify-end text-[10px] text-coal-400 dark:text-coal-600 font-mono">
               <span>v1.0.0</span>
             </div>
           </>
