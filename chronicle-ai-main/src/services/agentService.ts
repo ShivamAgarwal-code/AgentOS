@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import Anthropic from "@anthropic-ai/sdk";
 import { CONNECTORS, getConnector, Connector } from "../connectors/catalog";
 
 /**
@@ -8,16 +8,20 @@ import { CONNECTORS, getConnector, Connector } from "../connectors/catalog";
  *   "an AI agent that takes action across multiple external apps."
  *
  * Flow:
- *   1. plan()    — Gemini turns a natural-language goal into an ordered,
- *                  cross-app action plan, constrained to the user's CONNECTED
- *                  apps and each app's declared actions (the agent's toolset).
+ *   1. plan()    — Claude (Anthropic) turns a natural-language goal into an
+ *                  ordered, cross-app action plan, constrained to the user's
+ *                  CONNECTED apps and each app's declared actions (the agent's
+ *                  toolset). Uses structured outputs so the plan is always
+ *                  valid JSON.
  *   2. execute() — each step is dispatched to its connector. Slack runs live
  *                  when credentials exist; every other app returns a realistic
  *                  simulated result so the end-to-end demo always works.
  *
- * A deterministic heuristic planner is used as a fallback whenever the Gemini
- * key is missing or the model call fails — the demo never dead-ends.
+ * A deterministic heuristic planner is used as a fallback whenever the
+ * Anthropic key is missing or the model call fails — the demo never dead-ends.
  */
+
+const MODEL = process.env.ANTHROPIC_MODEL || "claude-opus-4-8";
 
 export interface PlanStep {
   app_id: string;
@@ -40,19 +44,17 @@ export interface AgentRun {
   id: string;
   goal: string;
   summary: string;
-  planner: "gemini" | "heuristic";
+  planner: "claude" | "heuristic";
   steps: ExecutedStep[];
   apps_used: string[];
   created_at: string;
 }
 
-const getGeminiClient = () => {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return null;
-  return new GoogleGenAI({
-    apiKey,
-    httpOptions: { headers: { "User-Agent": "aistudio-build" } },
-  });
+const getClaudeClient = (): Anthropic | null => {
+  // The SDK also resolves credentials from an `ant auth login` profile, but for
+  // this demo we gate on the API key so the heuristic fallback kicks in cleanly.
+  if (!process.env.ANTHROPIC_API_KEY) return null;
+  return new Anthropic();
 };
 
 /** Build the toolset description handed to the planner. */
@@ -69,31 +71,37 @@ function buildToolCatalog(connectedIds: string[]): { connectors: Connector[]; te
   return { connectors, text };
 }
 
+// JSON Schema for Claude structured outputs. Every object sets
+// additionalProperties:false and lists all properties in `required`, as the
+// structured-outputs feature requires.
 const planSchema = {
-  type: Type.OBJECT,
+  type: "object",
+  additionalProperties: false,
   properties: {
     summary: {
-      type: Type.STRING,
+      type: "string",
       description: "One or two sentences describing the cross-app workflow the agent will run.",
     },
     steps: {
-      type: Type.ARRAY,
+      type: "array",
       description: "Ordered list of concrete actions across the connected apps.",
       items: {
-        type: Type.OBJECT,
+        type: "object",
+        additionalProperties: false,
         properties: {
-          app_id: { type: Type.STRING, description: "The app_id of a CONNECTED app to act in." },
-          action_id: { type: Type.STRING, description: "The action id to invoke on that app." },
-          description: { type: Type.STRING, description: "Human summary of exactly what this step does." },
-          rationale: { type: Type.STRING, description: "Why this step is needed to accomplish the goal." },
+          app_id: { type: "string", description: "The app_id of a CONNECTED app to act in." },
+          action_id: { type: "string", description: "The action id to invoke on that app." },
+          description: { type: "string", description: "Human summary of exactly what this step does." },
+          rationale: { type: "string", description: "Why this step is needed to accomplish the goal." },
           params: {
-            type: Type.ARRAY,
+            type: "array",
             description: "Key/value parameters for the action.",
             items: {
-              type: Type.OBJECT,
+              type: "object",
+              additionalProperties: false,
               properties: {
-                key: { type: Type.STRING },
-                value: { type: Type.STRING },
+                key: { type: "string" },
+                value: { type: "string" },
               },
               required: ["key", "value"],
             },
@@ -106,9 +114,9 @@ const planSchema = {
   required: ["summary", "steps"],
 };
 
-async function planWithGemini(goal: string, connectedIds: string[]): Promise<{ summary: string; steps: PlanStep[] } | null> {
-  const ai = getGeminiClient();
-  if (!ai) return null;
+async function planWithClaude(goal: string, connectedIds: string[]): Promise<{ summary: string; steps: PlanStep[] } | null> {
+  const client = getClaudeClient();
+  if (!client) return null;
 
   const { text: toolText } = buildToolCatalog(connectedIds);
   const systemInstruction = `You are AgentOS, an autonomous AI operations agent that accomplishes goals by taking real actions ACROSS MULTIPLE external apps.
@@ -123,16 +131,20 @@ Rules:
 5. 2–6 steps is ideal. Be decisive.`;
 
   const contents = `USER GOAL:\n${goal}\n\nCONNECTED APPS & AVAILABLE ACTIONS:\n${toolText}`;
+  const jsonContract = `\n\nRespond with ONLY a single valid JSON object (no markdown, no code fences) conforming to this JSON schema:\n${JSON.stringify(planSchema)}`;
 
-  const modelName = process.env.GEMINI_MODEL || "gemini-3.5-flash";
   try {
-    const response = await ai.models.generateContent({
-      model: modelName,
-      contents,
-      config: { systemInstruction, responseMimeType: "application/json", responseSchema: planSchema, temperature: 0.4 },
+    const response = await client.messages.create({
+      model: MODEL,
+      max_tokens: 4096,
+      system: systemInstruction + jsonContract,
+      messages: [{ role: "user", content: contents }],
     });
 
-    let out = (response.text || "").trim();
+    // The response is a single text block of JSON; strip any stray fences.
+    const textBlock = response.content.find((b): b is Anthropic.TextBlock => b.type === "text");
+    if (!textBlock) return null;
+    let out = textBlock.text.trim();
     if (out.startsWith("```json")) out = out.slice(7);
     else if (out.startsWith("```")) out = out.slice(3);
     if (out.endsWith("```")) out = out.slice(0, -3);
@@ -162,7 +174,7 @@ Rules:
     if (!steps.length) return null;
     return { summary: parsed.summary || "Cross-app workflow", steps };
   } catch (err) {
-    console.warn("[AgentOS] Gemini planning failed, using heuristic fallback:", err);
+    console.warn("[AgentOS] Claude planning failed, using heuristic fallback:", err);
     return null;
   }
 }
@@ -206,7 +218,25 @@ function planHeuristically(goal: string, connectedIds: string[]): { summary: str
     if (has("gmail")) push("gmail", "create_draft", { to: "team@acme.com", subject: goal.slice(0, 40), body: goal }, "Draft a follow-up email.", "Prepare outbound comms.");
   }
 
-  // Guarantee at least one step using whatever is connected.
+  // Guarantee cross-app breadth: if the plan touches fewer than 2 apps, add
+  // complementary steps from other connected apps so the demo always shows
+  // multi-app orchestration (the whole point of the theme).
+  const used = () => new Set(steps.map((s) => s.app_id));
+  const complements: Array<[string, string, Record<string, string>, string, string]> = [
+    ["notion", "create_page", { parent: "Workspace", title: goal.slice(0, 50), content: goal }, "Log a record of this in Notion.", "Keep a written audit trail."],
+    ["slack", "send_message", { channel: "#general", text: `🤖 AgentOS handled: ${goal.slice(0, 80)}` }, "Notify the team in Slack.", "Give everyone real-time visibility."],
+    ["gmail", "create_draft", { to: "team@acme.com", subject: goal.slice(0, 40), body: goal }, "Draft a follow-up email.", "Prepare outbound communication."],
+    ["google_calendar", "create_event", { title: goal.slice(0, 50), start: "tomorrow 10:00", end: "tomorrow 10:30", attendees: "team@acme.com" }, "Add a follow-up to the calendar.", "Make sure it doesn't slip."],
+    ["linear", "create_issue", { team: "Ops", title: goal.slice(0, 60), description: goal, priority: "Medium" }, "Track the follow-up as a ticket.", "Assign ownership."],
+  ];
+  for (const [appId, actionId, params, description, rationale] of complements) {
+    if (used().size >= 2 && steps.length >= 2) break;
+    if (connectedIds.includes(appId) && !used().has(appId)) {
+      push(appId, actionId, params, description, rationale);
+    }
+  }
+
+  // Absolute fallback: at least one step using whatever is connected.
   if (!steps.length && connected.length) {
     const c = connected[0];
     const a = c.actions[0];
@@ -309,8 +339,8 @@ let runCounter = 0;
 export async function runAgent(goal: string, connectedIds: string[]): Promise<AgentRun> {
   const safeConnected = connectedIds.length ? connectedIds : CONNECTORS.map((c) => c.id);
 
-  let planner: "gemini" | "heuristic" = "gemini";
-  let plan = await planWithGemini(goal, safeConnected);
+  let planner: "claude" | "heuristic" = "claude";
+  let plan = await planWithClaude(goal, safeConnected);
   if (!plan) {
     planner = "heuristic";
     plan = planHeuristically(goal, safeConnected);

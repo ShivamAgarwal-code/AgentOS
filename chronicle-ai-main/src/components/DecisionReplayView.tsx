@@ -411,7 +411,7 @@ export default function DecisionReplayView({ setActivePage }: DecisionReplayView
                 Sprint 2: Chronicle Intelligence Engine
               </h3>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                Pristine Gemini API pipeline: Transform raw Slack conversations into multi-dimensional interactive Decision Replays.
+                Claude Opus 4.8 pipeline: Transform raw Slack conversations into multi-dimensional interactive Decision Replays.
               </p>
             </div>
           </div>
@@ -460,7 +460,7 @@ export default function DecisionReplayView({ setActivePage }: DecisionReplayView
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
               <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">
-                Model: <span className="text-zinc-600 dark:text-zinc-300 font-bold">gemini-3.5-flash</span> • Structured Schema-Force
+                Model: <span className="text-zinc-600 dark:text-zinc-300 font-bold">claude-opus-4-8</span> • Structured Schema-Force
               </span>
               <button 
                 type="submit"
@@ -1546,7 +1546,7 @@ export default function DecisionReplayView({ setActivePage }: DecisionReplayView
                         <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 font-mono text-[10px]">
                           <div>
                             <span className="text-zinc-400 dark:text-zinc-500 block">MODEL ID</span>
-                            <span className="block text-zinc-700 dark:text-zinc-300 font-bold">gemini-3.5-flash</span>
+                            <span className="block text-zinc-700 dark:text-zinc-300 font-bold">claude-opus-4-8</span>
                           </div>
                           <div>
                             <span className="text-zinc-400 dark:text-zinc-500 block">TIMESTAMP</span>

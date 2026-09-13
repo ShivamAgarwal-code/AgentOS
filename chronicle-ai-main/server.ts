@@ -32,7 +32,7 @@ async function startServer() {
       timestamp: new Date(Date.now() - 3600 * 1000).toISOString(),
       user: "diyamenon444@gmail.com",
       action: "Generate Replay",
-      model: "gemini-3.5-flash",
+      model: "claude-opus-4-8",
       confidence: 91.2,
       duration: 2150
     },
@@ -41,7 +41,7 @@ async function startServer() {
       timestamp: new Date(Date.now() - 7200 * 1000).toISOString(),
       user: "System (Slack Bot)",
       action: "Detect Duplicates",
-      model: "gemini-3.5-flash",
+      model: "claude-opus-4-8",
       confidence: 88.5,
       duration: 1420
     }
@@ -389,7 +389,7 @@ async function startServer() {
     const opStartTime = Date.now();
 
     try {
-      console.log("[AI Engine] Synthesizing decision replay from Slack transcript using Gemini...");
+      console.log("[AI Engine] Synthesizing decision replay from Slack transcript using Claude Opus 4.8...");
       const targetList = enterpriseDemoEnabled ? enterpriseReplaysList : activeReplaysList;
       
       const generatedReplay = await AIReasoningService.generateReplayFromConversation(
@@ -414,7 +414,7 @@ async function startServer() {
 
       // Record AI Operation in Enterprise Audit Trail
       const durationMs = Date.now() - opStartTime;
-      const modelUsed = process.env.GEMINI_MODEL || "gemini-3.5-flash";
+      const modelUsed = process.env.ANTHROPIC_MODEL || "claude-opus-4-8";
       const newAuditLog: AuditRecord = {
         id: `audit-${Date.now()}`,
         timestamp: new Date().toISOString(),

@@ -16,6 +16,9 @@ import {
   Volume2
 } from "lucide-react";
 import Sidebar from "./components/Sidebar";
+import AgentConsoleView from "./components/AgentConsoleView";
+import IntegrationsView from "./components/IntegrationsView";
+import ActivityView from "./components/ActivityView";
 import DashboardView from "./components/DashboardView";
 import KnowledgeGraphView from "./components/KnowledgeGraphView";
 import DecisionReplayView from "./components/DecisionReplayView";
@@ -26,7 +29,7 @@ import CommandPalette from "./components/CommandPalette";
 import { PageId } from "./types";
 
 export default function App() {
-  const [activePage, setActivePage] = useState<PageId>("dashboard");
+  const [activePage, setActivePage] = useState<PageId>("console");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -107,11 +110,11 @@ export default function App() {
 
   // Live rotating system logs/events ticker
   const liveTickerEvents = [
-    "ADR-14 indexed — Elasticsearch to Pinecone migration vector database transition recorded",
-    "Duplicate discussion prevented — Redundant thread in #ai-engine auto-linked to active decision trail",
-    "Decision replay generated — Interactive execution path trace compiled for SSE Gateway deprecation",
-    "Knowledge graph updated — Refreshed 12 new dependency paths and 3 domain nodes",
-    "Expert profile refreshed — Elena Rostova matched with verified skills in DB Architecture"
+    "Agent run complete — Refund logged in Stripe, ticket opened in Zendesk, team notified in Slack",
+    "Cross-app workflow — New lead synced from Gmail to HubSpot and assigned in Linear",
+    "Action executed — Meeting scheduled in Google Calendar and announced across Slack + Discord",
+    "Agent orchestration — Bug report filed in GitHub, mirrored to Jira, posted to #engineering",
+    "Integration connected — Notion now available to the agent (23 apps online)"
   ];
   const [tickerIndex, setTickerIndex] = useState(0);
 
@@ -148,16 +151,19 @@ export default function App() {
   // Render proper breadcrumbs
   const getBreadcrumbs = () => {
     const formatName = (str: string) => {
+      if (str === "console") return "Agent Console";
+      if (str === "integrations") return "Integrations";
+      if (str === "activity") return "Activity";
       if (str === "knowledge") return "Memory Graph";
       if (str === "replay") return "Decision Replay";
       if (str === "experts") return "Expert Finder";
       return str.charAt(0).toUpperCase() + str.slice(1);
     };
     return (
-      <div id="breadcrumbs" className="flex items-center space-x-1.5 text-xs font-mono text-zinc-500">
-        <span>Chronicle AI</span>
-        <ChevronRight className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-700" />
-        <span className="text-zinc-700 dark:text-zinc-400 font-semibold">{formatName(activePage)}</span>
+      <div id="breadcrumbs" className="flex items-center space-x-1.5 text-xs font-mono text-coal-500">
+        <span>AgentOS</span>
+        <ChevronRight className="w-3.5 h-3.5 text-coal-400 dark:text-coal-700" />
+        <span className="text-coal-700 dark:text-cream-400 font-semibold">{formatName(activePage)}</span>
       </div>
     );
   };
@@ -165,6 +171,12 @@ export default function App() {
   // Render active page view
   const renderActiveView = () => {
     switch (activePage) {
+      case "console":
+        return <AgentConsoleView />;
+      case "integrations":
+        return <IntegrationsView />;
+      case "activity":
+        return <ActivityView />;
       case "dashboard":
         return <DashboardView isLoading={demoLoading} isEmpty={demoEmpty} />;
       case "knowledge":
@@ -185,7 +197,7 @@ export default function App() {
   return (
     <div 
       id="app-root-container" 
-      className="flex min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 font-sans selection:bg-zinc-200 dark:selection:bg-zinc-800 selection:text-zinc-900 transition-colors duration-200"
+      className="flex min-h-screen bg-cream-100 dark:bg-coal-950 text-coal-900 dark:text-cream-50 font-sans selection:bg-clay-200 dark:selection:bg-clay-500/30 selection:text-coal-900 transition-colors duration-200"
     >
       {/* Sidebar - Desktop Layout */}
       <div className="hidden lg:block">
@@ -238,7 +250,7 @@ export default function App() {
       <div id="main-content-layout" className="flex-1 flex flex-col min-w-0 min-h-screen">
         
         {/* Professional Header Section */}
-        <header id="app-header" className="h-16 border-b border-zinc-200 dark:border-zinc-900 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between px-6 lg:px-8">
+        <header id="app-header" className="h-16 border-b border-cream-300 dark:border-coal-800 bg-cream-100/80 dark:bg-coal-950/80 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between px-6 lg:px-8">
           
           {/* Breadcrumbs and Mobile trigger */}
           <div className="flex items-center space-x-3">
@@ -335,15 +347,15 @@ export default function App() {
 
         {/* Live system events status ticker */}
         <div 
-          id="live-ticker-bar" 
-          className="bg-zinc-100/50 dark:bg-zinc-950/40 border-b border-zinc-200 dark:border-zinc-900 h-9 px-6 lg:px-8 flex items-center justify-between text-xs font-mono"
+          id="live-ticker-bar"
+          className="bg-cream-200/50 dark:bg-coal-900/40 border-b border-cream-300 dark:border-coal-800 h-9 px-6 lg:px-8 flex items-center justify-between text-xs font-mono"
         >
           <div className="flex items-center space-x-2.5 overflow-hidden w-full">
-            <span className="inline-flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-wider shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping mr-1" />
+            <span className="inline-flex items-center space-x-1 text-clay-600 dark:text-clay-400 font-semibold uppercase tracking-wider shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-clay-500 animate-ping mr-1" />
               Live Feed
             </span>
-            <span className="text-zinc-300 dark:text-zinc-800 shrink-0">|</span>
+            <span className="text-cream-400 dark:text-coal-800 shrink-0">|</span>
             <AnimatePresence mode="wait">
               <motion.div
                 key={tickerIndex}
