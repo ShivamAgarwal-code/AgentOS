@@ -1,0 +1,6 @@
+{
+  "name": "Chronicle AI",
+  "description": "Your organization's reasoning engine. Chronicle continuously watches Slack conversations and builds an organizational memory automatically.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

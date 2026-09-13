@@ -1,0 +1,44 @@
+{
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=7.0.0"
+  },
+  "name": "infoundr-site",
+  "private": true,
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "prebuild": "npm run prebuild --workspaces --if-present",
+    "pretest": "npm run prebuild --workspaces --if-present",
+    "setup": "./scripts/setup.sh && npm run setup-local",
+    "setup-backend": "./scripts/setup-backend.sh",
+    "setup-local": "./scripts/setup-local.sh",
+    "start": "cd src/frontend && npm run dev",
+    "test": "npm test --workspaces --if-present",
+    "upgrade": "npx generate-did backend && npx upgrade-canister backend --backend && dfx generate",
+    "deploy:playground": "./scripts/deploy-playground.sh",
+    "dev:local:frontend": "npm run setup-local && cd src/frontend && npm run dev",
+    "dev:local:all": "./scripts/setup-local-all.sh",
+    "dev:local:all:skip-ii": "./scripts/setup-local-all.sh --skip-ii",
+    "dev:playground": "./scripts/deploy-playground.sh",
+    "deploy:mainnet": "./scripts/deploy-mainnet.sh"
+  },
+  "workspaces": [
+    "src/frontend"
+  ],
+  "dependencies": {
+    "@dfinity/identity": "^2.4.1",
+    "chart.js": "^4.5.0",
+    "react-chartjs-2": "^5.3.0",
+    "react-toastify": "^11.0.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.6.0",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "react": "^18.2.0",
+    "tailwindcss": "^4.1.12",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vite-tsconfig-paths": "^5.1.4"
+  }
+}
