@@ -1,4 +1,13 @@
-export type PageId = "dashboard" | "knowledge" | "replay" | "experts" | "analytics" | "settings";
+export type PageId =
+  | "console"
+  | "integrations"
+  | "activity"
+  | "dashboard"
+  | "knowledge"
+  | "replay"
+  | "experts"
+  | "analytics"
+  | "settings";
 
 export interface Decision {
   id: string;

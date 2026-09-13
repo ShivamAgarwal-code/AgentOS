@@ -9,7 +9,7 @@
  * browser-only code.
  *
  * Each connector declares the concrete `actions` the AI agent is allowed to
- * take in that app. The planner exposes these actions to Gemini as the agent's
+ * take in that app. The planner exposes these actions to Claude as the agent's
  * toolset; the executor dispatches to them at run time.
  */
 

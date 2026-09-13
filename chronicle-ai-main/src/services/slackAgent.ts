@@ -561,7 +561,7 @@ export function initSlackAgent(
         console.log(`[Slack Step] [3/5] Compiled conversation transcript of ${transcriptLines.length} messages.`);
 
         // Step 4: Forward conversation text into the existing Chronicle reasoning pipeline
-        console.log(`[Slack Step] [4/5] Sending transcript to Gemini-powered Chronicle reasoning pipeline...`);
+        console.log(`[Slack Step] [4/5] Sending transcript to Claude-powered AgentOS reasoning pipeline...`);
         const replay = await AIReasoningService.generateReplayFromConversation(transcript);
 
         const nextId = activeReplaysListRef.length > 0

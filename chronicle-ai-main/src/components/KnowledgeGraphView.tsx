@@ -213,7 +213,7 @@ export default function KnowledgeGraphView() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  // Load dynamically generated decisions and experts from Gemini
+  // Load dynamically generated decisions and experts from Claude
   useEffect(() => {
     async function loadDynamicGraphElements() {
       try {

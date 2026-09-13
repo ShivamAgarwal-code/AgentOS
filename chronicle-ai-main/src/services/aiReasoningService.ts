@@ -1,23 +1,16 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import Anthropic from "@anthropic-ai/sdk";
 import { DecisionReplay, TimelineMessage, Benchmark, Alternative, DocumentLink } from "../types";
 
-// Initialize Gemini Client
-// The standard pattern is using process.env.GEMINI_API_KEY
-// and setting the 'User-Agent' header to 'aistudio-build' for telemetry
-const getGeminiClient = () => {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error("GEMINI_API_KEY environment variable is not configured in Secrets.");
+// Initialize the Anthropic (Claude) client.
+// Resolves credentials from ANTHROPIC_API_KEY (or an `ant auth login` profile).
+const getClaudeClient = (): Anthropic => {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error("ANTHROPIC_API_KEY environment variable is not configured.");
   }
-  return new GoogleGenAI({
-    apiKey,
-    httpOptions: {
-      headers: {
-        "User-Agent": "aistudio-build"
-      }
-    }
-  });
+  return new Anthropic();
 };
+
+const REASONING_MODEL = process.env.ANTHROPIC_MODEL || "claude-opus-4-8";
 
 // Realistic avatar list to assign to parsed Slack participants
 const AVATAR_POOL = [
@@ -37,8 +30,8 @@ export class AIReasoningService {
    * Generates a DecisionReplay structured object from raw Slack text conversation
    */
   static async generateReplayFromConversation(rawConversation: string, previousDecisions?: any[]): Promise<Partial<DecisionReplay>> {
-    const ai = getGeminiClient();
-    
+    const client = getClaudeClient();
+
     // System Instruction to force structured analysis
     const systemInstruction = `You are Chronicle AI's high-fidelity Organizational Reasoning Engine.
 Your task is to analyze raw Slack conversation transcripts and extract a complete, interactive decision replay path.
@@ -56,169 +49,169 @@ Ensure that:
 10. Automatically generate a complete, professional, publication-ready Architecture Decision Record (ADR) covering: title, context, problem, decision, alternatives, tradeoffs, consequences, owners, and timestamp.`;
 
     const responseSchema = {
-      type: Type.OBJECT,
+      type: "object",
       properties: {
         title: {
-          type: Type.STRING,
+          type: "string",
           description: "A short, crisp title for this decision, e.g., 'Migrate search service from Elasticsearch to Pinecone'"
         },
         channel: {
-          type: Type.STRING,
+          type: "string",
           description: "The Slack channel where this discussion took place (e.g., #infra, #payments, #backend, #security)"
         },
         project: {
-          type: Type.STRING,
+          type: "string",
           description: "The name of the project or system affected (e.g., Payments API, Checkout 2.0, Merchant Portal)"
         },
         proposal: {
-          type: Type.STRING,
+          type: "string",
           description: "Summary of the initial proposal or initiative introduced"
         },
         problem_statement: {
-          type: Type.STRING,
+          type: "string",
           description: "Detailed description of the underlying issue, problem, or root cause"
         },
         participants: {
-          type: Type.ARRAY,
-          items: { type: Type.STRING },
+          type: "array",
+          items: { type: "string" },
           description: "Full names of the key team participants involved in the conversation"
         },
         arguments_for: {
-          type: Type.ARRAY,
+          type: "array",
           items: {
-            type: Type.OBJECT,
+            type: "object",
             properties: {
-              speaker: { type: Type.STRING },
-              text: { type: Type.STRING, description: "A realistic quote summarizing their supporting point, styled like a Slack message" },
-              timestamp: { type: Type.STRING, description: "Slack-style timestamp, e.g., '10:14 AM'" },
-              reactions: { type: Type.INTEGER },
-              replies: { type: Type.INTEGER }
+              speaker: { type: "string" },
+              text: { type: "string", description: "A realistic quote summarizing their supporting point, styled like a Slack message" },
+              timestamp: { type: "string", description: "Slack-style timestamp, e.g., '10:14 AM'" },
+              reactions: { type: "integer" },
+              replies: { type: "integer" }
             },
             required: ["speaker", "text", "timestamp"]
           },
           description: "Array of supporting arguments, structured as Slack message replicas"
         },
         arguments_against: {
-          type: Type.ARRAY,
+          type: "array",
           items: {
-            type: Type.OBJECT,
+            type: "object",
             properties: {
-              speaker: { type: Type.STRING },
-              text: { type: Type.STRING, description: "A realistic quote summarizing their opposing or cautious point, styled like a Slack message" },
-              timestamp: { type: Type.STRING, description: "Slack-style timestamp, e.g., '10:20 AM'" },
-              reactions: { type: Type.INTEGER },
-              replies: { type: Type.INTEGER }
+              speaker: { type: "string" },
+              text: { type: "string", description: "A realistic quote summarizing their opposing or cautious point, styled like a Slack message" },
+              timestamp: { type: "string", description: "Slack-style timestamp, e.g., '10:20 AM'" },
+              reactions: { type: "integer" },
+              replies: { type: "integer" }
             },
             required: ["speaker", "text", "timestamp"]
           },
           description: "Array of opposing arguments or concerns raised, structured as Slack message replicas"
         },
         benchmarks: {
-          type: Type.ARRAY,
+          type: "array",
           items: {
-            type: Type.OBJECT,
+            type: "object",
             properties: {
-              metric: { type: Type.STRING, description: "System metric name, e.g., 'Query Latency (p99)', 'Average RAM Usage', 'Throughput'" },
-              before: { type: Type.STRING, description: "Performance value before the change, e.g., '4,200ms', '24GB/node'" },
-              after: { type: Type.STRING, description: "Performance value after the change, e.g., '85ms', '2.4GB/node'" },
-              source: { type: Type.STRING, description: "Source of benchmark, e.g., 'Benchmark suite v1.4', 'Sentry performance metrics'" }
+              metric: { type: "string", description: "System metric name, e.g., 'Query Latency (p99)', 'Average RAM Usage', 'Throughput'" },
+              before: { type: "string", description: "Performance value before the change, e.g., '4,200ms', '24GB/node'" },
+              after: { type: "string", description: "Performance value after the change, e.g., '85ms', '2.4GB/node'" },
+              source: { type: "string", description: "Source of benchmark, e.g., 'Benchmark suite v1.4', 'Sentry performance metrics'" }
             },
             required: ["metric", "before", "after", "source"]
           },
           description: "Analytical benchmarks or performance evidence comparing before/after setups"
         },
         alternatives_considered: {
-          type: Type.ARRAY,
+          type: "array",
           items: {
-            type: Type.OBJECT,
+            type: "object",
             properties: {
-              name: { type: Type.STRING, description: "Name of alternative considered, e.g., 'Self-hosted Qdrant/Milvus'" },
-              tradeoff: { type: Type.STRING, description: "Description of why it was rejected" }
+              name: { type: "string", description: "Name of alternative considered, e.g., 'Self-hosted Qdrant/Milvus'" },
+              tradeoff: { type: "string", description: "Description of why it was rejected" }
             },
             required: ["name", "tradeoff"]
           },
           description: "Other alternatives that were considered but rejected"
         },
         decision: {
-          type: Type.STRING,
+          type: "string",
           description: "The final committed or approved decision resolution"
         },
         reasoning: {
-          type: Type.STRING,
+          type: "string",
           description: "How technical consensus and alignment was synthesized among participants"
         },
         impact: {
-          type: Type.STRING,
+          type: "string",
           description: "The primary product and business impact of this decision"
         },
         tradeoffs: {
-          type: Type.ARRAY,
-          items: { type: Type.STRING },
+          type: "array",
+          items: { type: "string" },
           description: "List of accepted system tradeoffs, caveats, or structural compromises"
         },
         confidence_score: {
-          type: Type.NUMBER,
+          type: "number",
           description: "An alignment confidence score between 0 and 100 based on conversation consensus"
         },
         similarity_detection: {
-          type: Type.OBJECT,
+          type: "object",
           properties: {
-            possible_duplicate: { type: Type.BOOLEAN, description: "Set to true if a similar decision was found in previous decisions" },
-            similarity_percentage: { type: Type.NUMBER, description: "Estimated similarity percentage (0 to 100)" },
-            previous_decision_id: { type: Type.INTEGER, description: "ID of the similar previous decision" },
-            previous_decision_title: { type: Type.STRING, description: "Title of the similar previous decision" },
-            previous_decision_text: { type: Type.STRING, description: "The approved resolution of the similar previous decision" },
-            previous_date: { type: Type.STRING, description: "The date of the previous decision" },
-            original_experts: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Experts of the original decision" }
+            possible_duplicate: { type: "boolean", description: "Set to true if a similar decision was found in previous decisions" },
+            similarity_percentage: { type: "number", description: "Estimated similarity percentage (0 to 100)" },
+            previous_decision_id: { type: "integer", description: "ID of the similar previous decision" },
+            previous_decision_title: { type: "string", description: "Title of the similar previous decision" },
+            previous_decision_text: { type: "string", description: "The approved resolution of the similar previous decision" },
+            previous_date: { type: "string", description: "The date of the previous decision" },
+            original_experts: { type: "array", items: { type: "string" }, description: "Experts of the original decision" }
           },
           required: ["possible_duplicate"]
         },
         expert_recommendation: {
-          type: Type.OBJECT,
+          type: "object",
           properties: {
-            best_expert: { type: Type.STRING },
-            backup_expert: { type: Type.STRING },
-            confidence: { type: Type.NUMBER },
-            reasoning: { type: Type.STRING }
+            best_expert: { type: "string" },
+            backup_expert: { type: "string" },
+            confidence: { type: "number" },
+            reasoning: { type: "string" }
           },
           required: ["best_expert", "backup_expert", "confidence", "reasoning"]
         },
         risk_detection: {
-          type: Type.OBJECT,
+          type: "object",
           properties: {
-            security_risk: { type: Type.STRING, description: "Low, Medium, High, or Critical" },
-            performance_risk: { type: Type.STRING, description: "Low, Medium, High, or Critical" },
-            scalability_risk: { type: Type.STRING, description: "Low, Medium, High, or Critical" },
-            cost_risk: { type: Type.STRING, description: "Low, Medium, High, or Critical" },
-            vendor_lock_in: { type: Type.STRING, description: "Low, Medium, High, or Critical" },
-            compliance_risk: { type: Type.STRING, description: "Low, Medium, High, or Critical" }
+            security_risk: { type: "string", description: "Low, Medium, High, or Critical" },
+            performance_risk: { type: "string", description: "Low, Medium, High, or Critical" },
+            scalability_risk: { type: "string", description: "Low, Medium, High, or Critical" },
+            cost_risk: { type: "string", description: "Low, Medium, High, or Critical" },
+            vendor_lock_in: { type: "string", description: "Low, Medium, High, or Critical" },
+            compliance_risk: { type: "string", description: "Low, Medium, High, or Critical" }
           },
           required: ["security_risk", "performance_risk", "scalability_risk", "cost_risk", "vendor_lock_in", "compliance_risk"]
         },
          adr: {
-          type: Type.OBJECT,
+          type: "object",
           properties: {
-            title: { type: Type.STRING },
-            context: { type: Type.STRING },
-            problem: { type: Type.STRING },
-            decision: { type: Type.STRING },
-            alternatives: { type: Type.STRING },
-            tradeoffs: { type: Type.STRING },
-            consequences: { type: Type.STRING },
-            owners: { type: Type.STRING },
-            timestamp: { type: Type.STRING }
+            title: { type: "string" },
+            context: { type: "string" },
+            problem: { type: "string" },
+            decision: { type: "string" },
+            alternatives: { type: "string" },
+            tradeoffs: { type: "string" },
+            consequences: { type: "string" },
+            owners: { type: "string" },
+            timestamp: { type: "string" }
           },
           required: ["title", "context", "problem", "decision", "alternatives", "tradeoffs", "consequences", "owners", "timestamp"]
         },
         why_this_decision: {
-          type: Type.OBJECT,
+          type: "object",
           properties: {
-            core_problem: { type: Type.STRING, description: "Clear, concise summary of the core problem." },
-            why_chosen_won: { type: Type.STRING, description: "Specific technical reason why this chosen solution won over alternatives." },
-            strongest_supporting_evidence: { type: Type.STRING, description: "The single strongest supporting fact or metric from the discussion." },
-            strongest_opposing_argument: { type: Type.STRING, description: "The single strongest reservation, counter-argument, or caution raised." },
-            why_alternatives_rejected: { type: Type.STRING, description: "Specific technical reason why other solutions/alternatives were dismissed." },
-            remaining_risks: { type: Type.STRING, description: "Unresolved risks or potential trade-offs that the team decided to accept." }
+            core_problem: { type: "string", description: "Clear, concise summary of the core problem." },
+            why_chosen_won: { type: "string", description: "Specific technical reason why this chosen solution won over alternatives." },
+            strongest_supporting_evidence: { type: "string", description: "The single strongest supporting fact or metric from the discussion." },
+            strongest_opposing_argument: { type: "string", description: "The single strongest reservation, counter-argument, or caution raised." },
+            why_alternatives_rejected: { type: "string", description: "Specific technical reason why other solutions/alternatives were dismissed." },
+            remaining_risks: { type: "string", description: "Unresolved risks or potential trade-offs that the team decided to accept." }
           },
           required: ["core_problem", "why_chosen_won", "strongest_supporting_evidence", "strongest_opposing_argument", "why_alternatives_rejected", "remaining_risks"]
         }
@@ -232,8 +225,12 @@ Ensure that:
     };
 
     // Implement robust retry policy
-    const modelName = process.env.GEMINI_MODEL || "gemini-3.5-flash";
-    console.log(`[AI Engine] Configured Gemini model: ${modelName}`);
+    const modelName = REASONING_MODEL;
+    console.log(`[AI Engine] Configured Claude model: ${modelName}`);
+
+    // The schema (converted from the original definition) is handed to Claude as
+    // an explicit JSON contract; the model returns a single JSON object.
+    const jsonContract = `\n\nRespond with ONLY a single valid JSON object (no markdown, no code fences) that conforms to this JSON schema:\n${JSON.stringify(responseSchema)}`;
 
     const previousDecisionsStr = previousDecisions && previousDecisions.length > 0
       ? previousDecisions.map(d => `- ID ${d.id}: Title "${d.title}". Approved Resolution: "${d.decision}". Date: "${d.created_at || d.timestamp}". Experts: [${d.participants?.join(", ") || d.related_experts?.join(", ")}]`).join("\n")
@@ -250,21 +247,23 @@ Ensure that:
       }
 
       try {
-        console.log(`[AI Engine] Sending request to Gemini (Model: ${modelName}) - Attempt ${attempt}/4`);
-        const response = await ai.models.generateContent({
+        console.log(`[AI Engine] Sending request to Claude (Model: ${modelName}) - Attempt ${attempt}/4`);
+        const response = await client.messages.create({
           model: modelName,
-          contents: `Raw Slack Conversation:\n\n${rawConversation}\n\nList of Previous Architectural Decisions:\n${previousDecisionsStr}`,
-          config: {
-            systemInstruction,
-            responseMimeType: "application/json",
-            responseSchema,
-            temperature: 0.2
-          }
+          max_tokens: 8000,
+          system: systemInstruction + jsonContract,
+          messages: [
+            {
+              role: "user",
+              content: `Raw Slack Conversation:\n\n${rawConversation}\n\nList of Previous Architectural Decisions:\n${previousDecisionsStr}`,
+            },
+          ],
         });
 
-        let textOutput = response.text;
+        const textBlock = response.content.find((b): b is Anthropic.TextBlock => b.type === "text");
+        let textOutput = textBlock?.text;
         if (!textOutput) {
-          throw new Error("Gemini returned empty response.");
+          throw new Error("Claude returned empty response.");
         }
 
         // Feature 5: Robust JSON string cleaning for structured output validation
@@ -367,7 +366,7 @@ Ensure that:
     };
 
     if (isStatusError(lastError, 503)) {
-      throw new Error("Gemini is temporarily busy. Please try again in a few moments.");
+      throw new Error("Claude is temporarily busy. Please try again in a few moments.");
     } else if (isStatusError(lastError, 429)) {
       throw new Error("Rate limit reached. Please wait before generating another replay.");
     } else {

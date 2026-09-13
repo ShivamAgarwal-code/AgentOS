@@ -191,7 +191,7 @@ export default function SettingsView() {
             </div>
             <div>
               <h3 className="font-sans font-medium text-sm text-zinc-200">AI Reasoning Pipeline</h3>
-              <p className="text-[11px] text-zinc-500">Adjust background Gemini Flash synthesis parameters for Sprint 1.</p>
+              <p className="text-[11px] text-zinc-500">Adjust background Claude synthesis parameters.</p>
             </div>
           </div>
 
