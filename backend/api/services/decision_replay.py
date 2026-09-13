@@ -1,0 +1,274 @@
+from typing import List, Dict, Any, Optional
+from datetime import datetime
+
+class DecisionReplayService:
+    @staticmethod
+    def get_all_replays() -> List[Dict[str, Any]]:
+        """
+        Get all decision replays for NovaPay.
+        Business logic remains contained in service class for clean architecture.
+        """
+        return [
+            {
+                "id": 1,
+                "title": "Migrate search service from Elasticsearch to Pinecone",
+                "channel": "#infra",
+                "project": "Payments API",
+                "proposal": "Deprecate Elasticsearch and introduce Pinecone Managed Vector Database to index payment transaction metadata as dense vectors, enabling sub-100ms similarity search.",
+                "problem_statement": "NovaPay's merchant search and payment verification is facing extreme latency spikes (up to 4.2 seconds) on complex transaction metadata searches, directly impacting checkout success rates.",
+                "participants": ["Elena Rostova", "Marcus Chen", "Priya Shah", "Kevin Wong"],
+                "arguments_for": [
+                    {
+                        "speaker": "Elena Rostova",
+                        "text": "By shifting to vector-based query representation, we reduce the search space from millions of database records to a highly optimized multi-dimensional index. Pinecone's managed index saves us weeks of Kubernetes cluster maintenance.",
+                        "timestamp": "10:14 AM",
+                        "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80",
+                        "reactions": 5,
+                        "replies": 2
+                    },
+                    {
+                        "speaker": "Kevin Wong",
+                        "text": "Elasticsearch is hogging 24GB of RAM per node in our cluster. Offloading this workload to Pinecone decreases our infrastructure overhead by 35%.",
+                        "timestamp": "10:30 AM",
+                        "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80",
+                        "reactions": 4,
+                        "replies": 0
+                    }
+                ],
+                "arguments_against": [
+                    {
+                        "speaker": "Marcus Chen",
+                        "text": "Pinecone is a closed-source SaaS. If we migrate, we are locked into their pricing tiers. Additionally, handling customer payment card data (PCI-DSS compliance) inside a third-party vector store will require rigorous legal compliance reviews.",
+                        "timestamp": "10:20 AM",
+                        "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80",
+                        "reactions": 6,
+                        "replies": 3
+                    },
+                    {
+                        "speaker": "Priya Shah",
+                        "text": "We will have to rewrite our entire query parser engine. The transition period means maintaining dual ingestion pipelines, doubling our write-load.",
+                        "timestamp": "10:45 AM",
+                        "avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=80",
+                        "reactions": 2,
+                        "replies": 1
+                    }
+                ],
+                "benchmarks": [
+                    {
+                        "metric": "Query Latency (p99)",
+                        "before": "4,200ms",
+                        "after": "85ms",
+                        "source": "Benchmark suite v1.4"
+                    },
+                    {
+                        "metric": "Memory Consumption",
+                        "before": "24GB/node",
+                        "after": "2.4GB/node",
+                        "source": "Kubernetes cluster metrics"
+                    }
+                ],
+                "alternatives_considered": [
+                    {
+                        "name": "Self-hosted Qdrant/Milvus",
+                        "tradeoff": "Lower license cost but requires full-time DevOps engineer to manage clustering, replication, and sharding."
+                    },
+                    {
+                        "name": "Scaling current Elasticsearch clusters",
+                        "tradeoff": "Temporary fix. Costs scale exponentially and query latency remains linear with database growth."
+                    }
+                ],
+                "decision": "Proceed with migrating NovaPay Search & Verification to Pinecone Managed Vector Store.",
+                "reasoning": "The astronomical 45x speedup in query response times outweighs SaaS vendor dependency. Standard encryption policies and Pinecone's SOC2 compliance satisfy our legal department's PCI-DSS requirements.",
+                "impact": "Drastic improvement of Checkout 2.0 checkout latency, complete mitigation of peak-traffic search bottlenecks, and reduced server crashes during Friday afternoon sales.",
+                "tradeoffs": [
+                    "Vendor lock-in with Pinecone SaaS.",
+                    "Dual ingestion pipeline complexity during the 3-week transition phase."
+                ],
+                "confidence_score": 94.2,
+                "created_at": "2026-07-08T10:00:00Z",
+                "related_decisions": ["DEP-02: Deprecate Legacy WebSocket Service", "ID-11: Implement JWT auth in Checkout 2.0"],
+                "related_experts": ["Elena Rostova", "Kevin Wong"],
+                "related_documents": [
+                    {"title": "ADR-14: Search Migration Blueprint", "url": "https://notion.so/novapay/adr-14"},
+                    {"title": "PCI Compliance Audit Report", "url": "https://drive.google.com/novapay/pci-audit-2026"}
+                ]
+            },
+            {
+                "id": 2,
+                "title": "Introduce Kafka-backed Event Queue for checkout authorization",
+                "channel": "#payments",
+                "project": "Checkout 2.0",
+                "proposal": "Transition Checkout 2.0 payments system to an asynchronous queue model using Apache Kafka to hold checkout transactions, resolving bank outages gracefully without failing user requests.",
+                "problem_statement": "NovaPay is experiencing checkout transaction drop-offs due to downstream banking partner connection timeouts during peak shopping hours. The synchronous REST API blocks the main event loop.",
+                "participants": ["Sarah Ahmed", "Marcus Chen", "Elena Rostova", "Priya Shah"],
+                "arguments_for": [
+                    {
+                        "speaker": "Sarah Ahmed",
+                        "text": "By shifting to an asynchronous event-driven layout, we can return an immediate 'Processing' status to clients and process transactions reliably in the background, even if the payment gateway goes down.",
+                        "timestamp": "2:15 PM",
+                        "avatar": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80",
+                        "reactions": 8,
+                        "replies": 1
+                    },
+                    {
+                        "speaker": "Elena Rostova",
+                        "text": "We already have a Kafka cluster running for our ledger system, so setting up a new 'checkout-auth' topic carries minimal infra overhead.",
+                        "timestamp": "2:30 PM",
+                        "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80",
+                        "reactions": 5,
+                        "replies": 0
+                    }
+                ],
+                "arguments_against": [
+                    {
+                        "speaker": "Marcus Chen",
+                        "text": "This introduces asynchronous state management complexity to the mobile app and Checkout 2.0 frontend. Clients must transition to long polling or WebSockets/SSE to receive receipt confirmations.",
+                        "timestamp": "2:20 PM",
+                        "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80",
+                        "reactions": 4,
+                        "replies": 2
+                    },
+                    {
+                        "speaker": "Priya Shah",
+                        "text": "If a transaction fails in the background after we tell the customer it's 'Processing', we must handle rollback, refund, and customer support notifications asynchronously. This is a business process nightmare.",
+                        "timestamp": "2:40 PM",
+                        "avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=80",
+                        "reactions": 3,
+                        "replies": 4
+                    }
+                ],
+                "benchmarks": [
+                    {
+                        "metric": "Transaction Drop-off Rate",
+                        "before": "8.4% during peak",
+                        "after": "0.12%",
+                        "source": "Sentry performance metrics"
+                    },
+                    {
+                        "metric": "HTTP Event-Loop Block Time",
+                        "before": "340ms avg",
+                        "after": "12ms avg",
+                        "source": "New Relic APM"
+                    }
+                ],
+                "alternatives_considered": [
+                    {
+                        "name": "Database-backed polling (PostgreSQL queue)",
+                        "tradeoff": "Simpler to implement but database locks at scale will create read bottlenecks during high checkout concurrency."
+                    },
+                    {
+                        "name": "Aggressive HTTP Retry Policies with Exponential Backoff",
+                        "tradeoff": "Still holds client threads open, eventually causing client connection exhaustion."
+                    }
+                ],
+                "decision": "Approved. Shift Checkout 2.0 authorization pipeline to Apache Kafka with SSE notifications.",
+                "reasoning": "Reliability and customer transaction safety are our primary priorities. Background asynchronous processing with proper dead-letter-queues ensures zero transaction loss, even during complete bank partner outages.",
+                "impact": "Almost completely eliminated aborted checkouts, greatly smoothed server loads, and increased NovaPay's Net Promoter Score.",
+                "tradeoffs": [
+                    "Complex frontend UI state management (listening to Server-Sent Events).",
+                    "Requires robust back-office logic for asynchronous transaction failures."
+                ],
+                "confidence_score": 96.5,
+                "created_at": "2026-07-08T11:30:00Z",
+                "related_decisions": ["DEP-02: Deprecate Legacy WebSocket Service"],
+                "related_experts": ["Sarah Ahmed", "Elena Rostova"],
+                "related_documents": [
+                    {"title": "ADR-18: Event-Driven Payments Architecture", "url": "https://notion.so/novapay/adr-18"},
+                    {"title": "SSE Connection Guidelines", "url": "https://wiki.novapay/sse-standard"}
+                ]
+            },
+            {
+                "id": 3,
+                "title": "Migrate Merchant Portal backend to Go microservices",
+                "channel": "#backend",
+                "project": "Merchant Portal",
+                "proposal": "Re-engineer high-volume reporting endpoints into a lightweight Go microservice, drastically increasing speed and lowering memory overhead.",
+                "problem_statement": "The Python-based monolithic Merchant Portal backend is suffering from slow JSON serialization speeds and high memory usage, leading to sluggish report loading for high-volume merchants.",
+                "participants": ["Elena Rostova", "Priya Shah", "Kevin Wong"],
+                "arguments_for": [
+                    {
+                        "speaker": "Kevin Wong",
+                        "text": "Go's execution performance and native concurrency support are perfect for streaming large transaction datasets. Our initial trials show a 10x speedup in CSV export times.",
+                        "timestamp": "11:15 AM",
+                        "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80",
+                        "reactions": 6,
+                        "replies": 1
+                    },
+                    {
+                        "speaker": "Priya Shah",
+                        "text": "This modularization allows us to deploy reporting independently from the primary payment core, reducing risk during weekly releases.",
+                        "timestamp": "11:25 AM",
+                        "avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=80",
+                        "reactions": 4,
+                        "replies": 0
+                    }
+                ],
+                "arguments_against": [
+                    {
+                        "speaker": "Elena Rostova",
+                        "text": "Go lacks a mature ORM like SQLAlchemy, meaning we will write raw SQL queries for reporting. This increases database maintenance cost and SQL injection vectors if not audited carefully.",
+                        "timestamp": "11:20 AM",
+                        "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80",
+                        "reactions": 5,
+                        "replies": 3
+                    }
+                ],
+                "benchmarks": [
+                    {
+                        "metric": "JSON Serialization Time",
+                        "before": "840ms",
+                        "after": "35ms",
+                        "source": "Reporting Benchmarks 2026"
+                    },
+                    {
+                        "metric": "Average RAM Usage",
+                        "before": "1.2GB",
+                        "after": "85MB",
+                        "source": "Docker container profiles"
+                    }
+                ],
+                "alternatives_considered": [
+                    {
+                        "name": "Rewrite with FastAPI and PyPy compiler",
+                        "tradeoff": "FastAPI is faster than Django, but still cannot match native static-binary compilation speeds and concurrency throughput of Go."
+                    }
+                ],
+                "decision": "Approved. Rebuild reporting system in Go; keep other administrative tasks in the Django core.",
+                "reasoning": "Go is an industry standard for reporting and heavy-data APIs. The performance benefits are too significant to ignore, especially as our larger enterprise merchants scale up.",
+                "impact": "Supercharged report processing and solved high memory leaks in production.",
+                "tradeoffs": [
+                    "Polyglot codebase with mixed Python and Go expertise required.",
+                    "Raw SQL query validation overhead."
+                ],
+                "confidence_score": 91.0,
+                "created_at": "2026-07-08T09:15:00Z",
+                "related_decisions": [],
+                "related_experts": ["Kevin Wong", "Priya Shah"],
+                "related_documents": [
+                    {"title": "ADR-09: Polyglot Microservices Strategy", "url": "https://notion.so/novapay/adr-09"}
+                ]
+            }
+        ]
+
+    @classmethod
+    def get_replay_by_id(cls, replay_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Get a specific decision replay by ID.
+        """
+        all_replays = cls.get_all_replays()
+        for r in all_replays:
+            if r["id"] == replay_id:
+                return r
+        return None
+
+    @classmethod
+    def add_mock_replay(cls, mock_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Echoes or simulates creating a new mock decision replay.
+        """
+        # Ensure ID exists
+        if "id" not in mock_data:
+            mock_data["id"] = len(cls.get_all_replays()) + 1
+        if "created_at" not in mock_data:
+            mock_data["created_at"] = datetime.utcnow().isoformat()
+        return mock_data
