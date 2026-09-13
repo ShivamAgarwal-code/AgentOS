@@ -1,18 +1,15 @@
 import { useState, useEffect, startTransition } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
-  Menu, 
-  X, 
-  Search, 
-  Bell, 
-  User, 
+  Menu,
+  X,
+  Search,
+  User,
   ChevronRight,
   Sparkles,
   Zap,
   RefreshCw,
   FolderLock,
-  Sun,
-  Moon,
   Volume2
 } from "lucide-react";
 import Sidebar from "./components/Sidebar";
@@ -34,24 +31,12 @@ export default function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   
-  // Theme management: light / dark
-  const [theme, setTheme] = useState<"dark" | "light">(() => {
-    const saved = localStorage.getItem("theme");
-    return saved === "light" ? "light" : "dark";
-  });
-
-  // Sync theme to document element
+  // Dark theme only.
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === "dark") {
-      root.classList.add("dark");
-      root.classList.remove("light");
-    } else {
-      root.classList.add("light");
-      root.classList.remove("dark");
-    }
-    localStorage.setItem("theme", theme);
-  }, [theme]);
+    root.classList.add("dark");
+    root.classList.remove("light");
+  }, []);
 
   // Command palette shortcut listener (⌘K / Ctrl+K)
   useEffect(() => {
@@ -312,24 +297,6 @@ export default function App() {
                 <span className={`w-1.5 h-1.5 rounded-full ${enterpriseDemo ? "bg-indigo-500 animate-pulse" : "bg-zinc-400"}`} />
               </button>
             </div>
-
-            {/* Dark/Light mode toggle */}
-            <button
-              id="theme-toggle-btn"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="p-1.5 rounded-lg border border-zinc-200 dark:border-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-
-            {/* Notification Indicator */}
-            <button id="notification-button" className="p-1.5 rounded-lg border border-zinc-200 dark:border-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 relative">
-              <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-indigo-600 dark:bg-indigo-400 rounded-full" />
-            </button>
-
-            <span className="h-4 w-[1px] bg-zinc-200 dark:bg-zinc-900" />
 
             {/* User Avatar metadata */}
             <div id="user-metadata-badge" className="flex items-center space-x-2.5">
