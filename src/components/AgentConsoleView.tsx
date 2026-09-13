@@ -44,10 +44,10 @@ interface Meta {
 }
 
 const EXAMPLES = [
-  "A customer emailed asking for a refund — process it and keep everyone in the loop",
+  "A customer emailed asking for a refund - process it and keep everyone in the loop",
   "We found a critical bug in checkout. Triage it across the team.",
   "Schedule a 30-min product sync with the team for tomorrow and announce it",
-  "A new lead came in from the website — get sales on it",
+  "A new lead came in from the website - get sales on it",
   "Draft our weekly investor update and circulate it for review",
 ];
 
@@ -173,7 +173,7 @@ export default function AgentConsoleView() {
             </h1>
             <p className="mt-3 text-sm sm:text-base text-coal-500 dark:text-cream-400 max-w-2xl">
               Describe a goal in plain English. AgentOS plans a workflow and takes action across your connected
-              apps — Slack, Gmail, Notion, GitHub, Calendar and more.
+              apps - Slack, Gmail, Notion, GitHub, Calendar and more.
             </p>
 
             {/* Input */}
@@ -186,7 +186,7 @@ export default function AgentConsoleView() {
                   onKeyDown={handleKeyDown}
                   rows={3}
                   disabled={running}
-                  placeholder="e.g. A customer emailed about a refund — process it and notify the team…"
+                  placeholder="e.g. A customer emailed about a refund - process it and notify the team…"
                   className="w-full bg-transparent px-4 py-3.5 text-sm text-coal-800 dark:text-cream-100 placeholder:text-coal-400 dark:placeholder:text-coal-600 focus:outline-none resize-none"
                 />
                 <div className="flex items-center justify-between px-3 pb-3">

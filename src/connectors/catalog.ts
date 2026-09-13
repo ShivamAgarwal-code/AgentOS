@@ -73,6 +73,7 @@ export const CONNECTORS: Connector[] = [
     color: "#5865F2",
     icon: "MessageSquare",
     description: "Send messages and alerts to Discord servers & channels.",
+    liveCapable: true,
     actions: [
       { id: "send_message", label: "Send message", description: "Post a message to a Discord channel.", params: ["channel", "text"] },
       { id: "create_thread", label: "Create thread", description: "Open a discussion thread in a channel.", params: ["channel", "title"] },
@@ -122,6 +123,7 @@ export const CONNECTORS: Connector[] = [
     color: "#000000",
     icon: "FileText",
     description: "Create pages, log entries, and update databases.",
+    liveCapable: true,
     actions: [
       { id: "create_page", label: "Create page", description: "Create a new Notion page.", params: ["parent", "title", "content"] },
       { id: "add_db_row", label: "Add database row", description: "Append a row to a Notion database.", params: ["database", "properties"] },
@@ -198,6 +200,7 @@ export const CONNECTORS: Connector[] = [
     color: "#5E6AD2",
     icon: "CircleDot",
     description: "Create and triage engineering tickets.",
+    liveCapable: true,
     actions: [
       { id: "create_issue", label: "Create issue", description: "Create a Linear issue.", params: ["team", "title", "description", "priority"] },
       { id: "update_status", label: "Update status", description: "Move an issue to a new status.", params: ["issue_id", "status"] },
@@ -222,6 +225,7 @@ export const CONNECTORS: Connector[] = [
     color: "#0079BF",
     icon: "Trello",
     description: "Add cards and organize boards.",
+    liveCapable: true,
     actions: [
       { id: "create_card", label: "Create card", description: "Add a card to a Trello list.", params: ["board", "list", "name", "description"] },
     ],

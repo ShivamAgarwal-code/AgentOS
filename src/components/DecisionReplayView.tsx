@@ -910,7 +910,7 @@ export default function DecisionReplayView({ setActivePage }: DecisionReplayView
                       <p className="text-[11px] italic text-zinc-500 dark:text-zinc-400 leading-normal font-sans">
                         "{selectedReplay.arguments_for[0].text}"
                       </p>
-                      <span className="text-[9px] font-mono text-zinc-400 block text-right">— {selectedReplay.arguments_for[0].speaker}</span>
+                      <span className="text-[9px] font-mono text-zinc-400 block text-right">- {selectedReplay.arguments_for[0].speaker}</span>
                     </div>
                   )}
                   {selectedReplay.arguments_against?.[0] && (
@@ -921,7 +921,7 @@ export default function DecisionReplayView({ setActivePage }: DecisionReplayView
                       <p className="text-[11px] italic text-zinc-500 dark:text-zinc-400 leading-normal font-sans">
                         "{selectedReplay.arguments_against[0].text}"
                       </p>
-                      <span className="text-[9px] font-mono text-zinc-400 block text-right">— {selectedReplay.arguments_against[0].speaker}</span>
+                      <span className="text-[9px] font-mono text-zinc-400 block text-right">- {selectedReplay.arguments_against[0].speaker}</span>
                     </div>
                   )}
                 </div>
@@ -967,7 +967,7 @@ export default function DecisionReplayView({ setActivePage }: DecisionReplayView
                     <p className="text-[11px] italic text-zinc-500 dark:text-zinc-400 leading-normal font-sans">
                       "{selectedReplay.arguments_for[1].text}"
                     </p>
-                    <span className="text-[9px] font-mono text-zinc-400 block text-right">— {selectedReplay.arguments_for[1].speaker}</span>
+                    <span className="text-[9px] font-mono text-zinc-400 block text-right">- {selectedReplay.arguments_for[1].speaker}</span>
                   </div>
                 )}
               </div>

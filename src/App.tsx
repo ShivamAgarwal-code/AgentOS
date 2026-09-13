@@ -110,11 +110,11 @@ export default function App() {
 
   // Live rotating system logs/events ticker
   const liveTickerEvents = [
-    "Agent run complete — Refund logged in Stripe, ticket opened in Zendesk, team notified in Slack",
-    "Cross-app workflow — New lead synced from Gmail to HubSpot and assigned in Linear",
-    "Action executed — Meeting scheduled in Google Calendar and announced across Slack + Discord",
-    "Agent orchestration — Bug report filed in GitHub, mirrored to Jira, posted to #engineering",
-    "Integration connected — Notion now available to the agent (23 apps online)"
+    "Refunded a customer in Stripe, opened a Zendesk ticket, and let the team know in Slack",
+    "Pulled a new lead from Gmail into HubSpot and handed it to someone on Linear",
+    "Booked a meeting on Google Calendar and gave everyone a heads-up in Slack and Discord",
+    "Filed a bug in GitHub, copied it into Jira, and dropped a note in #engineering",
+    "Connected Notion - the agent can now use all 23 of your apps"
   ];
   const [tickerIndex, setTickerIndex] = useState(0);
 

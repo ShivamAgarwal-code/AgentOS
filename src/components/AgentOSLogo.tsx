@@ -3,7 +3,7 @@ interface AgentOSLogoProps {
 }
 
 /**
- * AgentOS mark — a warm clay "hub-and-spokes" glyph: one central agent
+ * AgentOS mark - a warm clay "hub-and-spokes" glyph: one central agent
  * orchestrating actions out to multiple connected apps.
  */
 export default function AgentOSLogo({ className = "w-8 h-8" }: AgentOSLogoProps) {

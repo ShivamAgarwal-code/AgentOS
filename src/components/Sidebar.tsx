@@ -9,8 +9,6 @@ import {
   Users2,
   BarChart3,
   Settings2,
-  Github,
-  BookOpen,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -121,39 +119,7 @@ export default function Sidebar({ activePage, setActivePage, collapsed = false, 
       </div>
 
       {/* Footer */}
-      <div id="sidebar-footer" className={`border-t border-cream-300 dark:border-coal-800 ${collapsed ? "p-2 space-y-2" : "p-4 space-y-3"}`}>
-        {!collapsed ? (
-          <>
-            <a
-              id="github-link"
-              href="https://github.com/agentos"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center space-x-3 px-3 py-2 rounded-md text-xs font-mono text-coal-500 hover:text-clay-600 dark:hover:text-clay-400 transition-colors"
-            >
-              <Github className="w-3.5 h-3.5" />
-              <span>github.com/agentos</span>
-            </a>
-            <a
-              id="docs-link"
-              href="/docs/architecture/sprint0_architecture.md"
-              className="flex items-center space-x-3 px-3 py-2 rounded-md text-xs font-mono text-coal-500 hover:text-clay-600 dark:hover:text-clay-400 transition-colors"
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>documentation</span>
-            </a>
-            <div id="version-display" className="px-3 py-1 flex items-center justify-end text-[10px] text-coal-400 dark:text-coal-600 font-mono">
-              <span>v1.0.0</span>
-            </div>
-          </>
-        ) : (
-          <div className="flex flex-col items-center space-y-3">
-            <a href="https://github.com/agentos" target="_blank" rel="noopener noreferrer" title="GitHub" className="p-1.5 rounded-md hover:bg-cream-200 dark:hover:bg-coal-800 text-coal-500">
-              <Github className="w-4 h-4" />
-            </a>
-          </div>
-        )}
-
+      <div id="sidebar-footer" className={`border-t border-cream-300 dark:border-coal-800 ${collapsed ? "p-2" : "p-4"}`}>
         {setCollapsed && (
           <button
             id="sidebar-collapse-button"

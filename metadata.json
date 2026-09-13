@@ -1,6 +1,6 @@
 {
   "name": "AgentOS",
-  "description": "One AI agent that takes action across all your apps. Describe a goal in plain English and AgentOS plans and executes a cross-app workflow — Slack, Gmail, Notion, GitHub, Linear, Calendar and more.",
+  "description": "One AI agent that takes action across all your apps. Describe a goal in plain English and AgentOS plans and executes a cross-app workflow - Slack, Gmail, Notion, GitHub, Linear, Calendar and more.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

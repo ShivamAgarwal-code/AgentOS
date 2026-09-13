@@ -3,7 +3,7 @@
 @variant dark (&:where(.dark, .dark *));
 
 /* ============================================================
-   AgentOS — Claude / Anthropic-inspired design system
+   AgentOS - Claude / Anthropic-inspired design system
    Warm creamy ivory + coal + clay/coral accent. No greens.
    ============================================================ */
 @theme {
@@ -84,7 +84,7 @@
 .animate-pulseRing { animation: pulse-ring 2s infinite; }
 .animate-floatSlow { animation: float-slow 4s ease-in-out infinite; }
 
-/* Base surfaces — warm, not stark */
+/* Base surfaces - warm, not stark */
 body {
   background-color: var(--color-cream-100);
   color: var(--color-coal-900);

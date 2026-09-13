@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { CONNECTORS, getConnector, Connector } from "../connectors/catalog";
+import { liveExecute } from "../connectors/executors";
 
 /**
  * AgentOS Agent Service
@@ -8,17 +9,17 @@ import { CONNECTORS, getConnector, Connector } from "../connectors/catalog";
  *   "an AI agent that takes action across multiple external apps."
  *
  * Flow:
- *   1. plan()    — Claude (Anthropic) turns a natural-language goal into an
+ *   1. plan()    - Claude (Anthropic) turns a natural-language goal into an
  *                  ordered, cross-app action plan, constrained to the user's
  *                  CONNECTED apps and each app's declared actions (the agent's
  *                  toolset). Uses structured outputs so the plan is always
  *                  valid JSON.
- *   2. execute() — each step is dispatched to its connector. Slack runs live
+ *   2. execute() - each step is dispatched to its connector. Slack runs live
  *                  when credentials exist; every other app returns a realistic
  *                  simulated result so the end-to-end demo always works.
  *
  * A deterministic heuristic planner is used as a fallback whenever the
- * Anthropic key is missing or the model call fails — the demo never dead-ends.
+ * Anthropic key is missing or the model call fails - the demo never dead-ends.
  */
 
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-opus-4-8";
@@ -65,7 +66,7 @@ function buildToolCatalog(connectedIds: string[]): { connectors: Connector[]; te
       const acts = c.actions
         .map((a) => `    • ${a.id} (${a.label}): ${a.description} [params: ${a.params.join(", ")}]`)
         .join("\n");
-      return `- ${c.name} [app_id: ${c.id}] — ${c.category}\n${acts}`;
+      return `- ${c.name} [app_id: ${c.id}] - ${c.category}\n${acts}`;
     })
     .join("\n");
   return { connectors, text };
@@ -125,10 +126,10 @@ You are given a user goal and a catalog of the user's CONNECTED apps, each with 
 
 Rules:
 1. Only use apps and action ids that appear in the connected app catalog. Never invent apps or actions.
-2. Prefer plans that span 2 or more DIFFERENT apps when the goal naturally calls for it — this is a cross-app orchestration agent.
+2. Prefer plans that span 2 or more DIFFERENT apps when the goal naturally calls for it - this is a cross-app orchestration agent.
 3. Fill params with realistic, specific values inferred from the goal (real-sounding names, subjects, ticket titles, dates, etc.). Never leave a required param blank.
 4. Keep steps atomic: one action per step. Order them the way they must actually happen.
-5. 2–6 steps is ideal. Be decisive.`;
+5. 2-6 steps is ideal. Be decisive.`;
 
   const contents = `USER GOAL:\n${goal}\n\nCONNECTED APPS & AVAILABLE ACTIONS:\n${toolText}`;
   const jsonContract = `\n\nRespond with ONLY a single valid JSON object (no markdown, no code fences) conforming to this JSON schema:\n${JSON.stringify(planSchema)}`;
@@ -248,26 +249,6 @@ function planHeuristically(goal: string, connectedIds: string[]): { summary: str
   return { summary: `AgentOS will accomplish "${goal.slice(0, 80)}" across ${new Set(steps.map((s) => s.app_id)).size} connected app(s).`, steps };
 }
 
-/** Live Slack post via Web API (no extra deps — uses fetch). */
-async function executeSlackLive(step: PlanStep): Promise<ExecutedStep | null> {
-  const token = process.env.SLACK_BOT_TOKEN;
-  if (!token || step.action_id !== "send_message") return null;
-  try {
-    const res = await fetch("https://slack.com/api/chat.postMessage", {
-      method: "POST",
-      headers: { "Content-Type": "application/json; charset=utf-8", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ channel: step.params.channel || "#general", text: step.params.text || "AgentOS update" }),
-    });
-    const data: any = await res.json();
-    if (data.ok) {
-      return { ...step, status: "success", result: `Message delivered to ${data.channel}`, link: undefined, finished_at: new Date().toISOString() };
-    }
-    return null; // fall through to simulation on API error
-  } catch {
-    return null;
-  }
-}
-
 /** Realistic simulated result strings + fake ids/links per app. */
 function simulateResult(step: PlanStep): { result: string; link?: string } {
   const rid = Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -325,10 +306,10 @@ function simulateResult(step: PlanStep): { result: string; link?: string } {
 }
 
 async function executeStep(step: PlanStep): Promise<ExecutedStep> {
-  // Try a real Slack post first when possible.
-  if (step.app_id === "slack") {
-    const live = await executeSlackLive(step);
-    if (live) return live;
+  // Try a real API call first for any app that has a live executor + credentials.
+  const live = await liveExecute({ app_id: step.app_id, action_id: step.action_id, params: step.params });
+  if (live) {
+    return { ...step, status: "success", result: live.result, link: live.link, finished_at: new Date().toISOString() };
   }
   const sim = simulateResult(step);
   return { ...step, status: "simulated", result: sim.result, link: sim.link, finished_at: new Date().toISOString() };

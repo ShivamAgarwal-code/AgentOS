@@ -84,9 +84,9 @@ A timeline of every action the agent has taken across your apps - per-app result
         +---------------+---------------+
                         |  ordered, cross-app plan
                         v
-        +-------------------------------+     Slack -> real HTTP call (chat.postMessage)
-        |           Executor            |---->  when a bot token is present
-        |  (connector dispatch layer)   |      every other app -> realistic simulated result
+        +-------------------------------+     6 apps -> real API call when
+        |           Executor            |---->  their token is configured
+        |  (connector dispatch layer)   |      everything else -> realistic simulated result
         +---------------+---------------+
                         |
                         v
@@ -95,7 +95,7 @@ A timeline of every action the agent has taken across your apps - per-app result
 
 1. **Toolset from connectors.** `src/connectors/catalog.ts` is a dependency-free registry declaring every app and the concrete actions the agent may take in it (e.g. Slack -> `send_message`, Linear -> `create_issue`). It's shared by both the server (planning + execution) and the client (Integrations UI).
 2. **Planning.** The agent sends the goal plus the catalog of *connected* apps to Claude, which returns an ordered, cross-app plan as strict JSON.
-3. **Execution.** Each step is dispatched to its connector. Slack runs a **real** API call when credentials exist; every other app returns a realistic simulated result so the end-to-end flow always completes.
+3. **Execution.** Each step is dispatched to its connector. Six apps (Slack, Discord, GitHub, Notion, Linear, Trello) make a **real** API call when their credentials exist; every other app returns a realistic simulated result so the end-to-end flow always completes.
 4. **Recording.** Every executed step is fanned into the activity log and the run history.
 
 ---
@@ -114,7 +114,7 @@ A timeline of every action the agent has taken across your apps - per-app result
 | **Finance** | Stripe |
 | **Support** | Zendesk |
 
-> Slack and GitHub are **live-capable** (real API calls when tokens are configured); the rest execute in realistic simulation for the demo.
+> **Six apps do real API calls** when their credentials are set - **Slack, Discord, GitHub, Notion, Linear, Trello**. The rest execute in realistic simulation for the demo. Every app falls back to simulation automatically if its credentials are missing, so nothing ever breaks.
 
 ---
 
@@ -183,8 +183,15 @@ Full step-by-step (both platforms, env vars, verification) is in
 |----------|---------|
 | `ANTHROPIC_API_KEY` | Enables the Claude-powered planner (falls back to a heuristic planner if unset) |
 | `ANTHROPIC_MODEL` | Optional model override (default `claude-opus-4-8`) |
-| `SLACK_BOT_TOKEN` / `SLACK_SIGNING_SECRET` | Optional - enables **live** Slack message execution |
+| `SLACK_BOT_TOKEN` / `SLACK_SIGNING_SECRET` | Live Slack messages |
+| `DISCORD_WEBHOOK_URL` | Live Discord messages |
+| `GITHUB_TOKEN` (+ optional `GITHUB_DEFAULT_REPO`) | Live GitHub issues / comments |
+| `NOTION_TOKEN` + `NOTION_PARENT_PAGE_ID` | Live Notion pages |
+| `LINEAR_API_KEY` | Live Linear issues |
+| `TRELLO_KEY` + `TRELLO_TOKEN` + `TRELLO_LIST_ID` | Live Trello cards |
 | `PORT` | Server port (default `3000`) |
+
+> Every live integration is optional. If its credentials are missing, that app runs in simulation - the app never breaks.
 
 ---
 
@@ -243,7 +250,7 @@ AgentOS uses a warm, **Claude/Anthropic-inspired aesthetic**: creamy ivory backg
 ## 🛡 Resilience & fallbacks
 
 - **No API key? Still works.** If `ANTHROPIC_API_KEY` is missing, a deterministic **heuristic planner** produces a sensible multi-app plan, so the demo never dead-ends.
-- **Live where possible, simulated everywhere else.** Slack posts for real when a bot token is set; every other app returns a realistic, plausible result with generated IDs and deep links.
+- **Live where possible, simulated everywhere else.** Six apps (Slack, Discord, GitHub, Notion, Linear, Trello) make real API calls when their tokens are set; every other app returns a realistic, plausible result with generated IDs and deep links.
 - **Structured output.** The planner uses a JSON contract, so plans are always valid and parseable.
 
 ---
