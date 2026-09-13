@@ -25,8 +25,36 @@ import SettingsView from "./components/SettingsView";
 import CommandPalette from "./components/CommandPalette";
 import { PageId } from "./types";
 
+// URL routing: each sidebar tab maps to a real, deep-linkable path.
+const PAGE_TO_PATH: Record<PageId, string> = {
+  console: "/",
+  integrations: "/integrations",
+  activity: "/activity",
+  dashboard: "/dashboard",
+  knowledge: "/memory",
+  replay: "/replay",
+  experts: "/experts",
+  analytics: "/analytics",
+  settings: "/settings",
+};
+
+const PATH_TO_PAGE: Record<string, PageId> = Object.entries(PAGE_TO_PATH).reduce(
+  (acc, [page, path]) => {
+    acc[path] = page as PageId;
+    return acc;
+  },
+  {} as Record<string, PageId>
+);
+
+function pageFromLocation(): PageId {
+  // A ?replay=<id> query param opens the Decision Replay view.
+  if (new URLSearchParams(window.location.search).get("replay")) return "replay";
+  const path = window.location.pathname.replace(/\/+$/, "") || "/";
+  return PATH_TO_PAGE[path] ?? "console";
+}
+
 export default function App() {
-  const [activePage, setActivePage] = useState<PageId>("console");
+  const [activePage, setActivePage] = useState<PageId>(() => pageFromLocation());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -109,17 +137,20 @@ export default function App() {
     }, 6000);
     return () => clearInterval(interval);
   }, [liveTickerEvents.length]);
+  // Keep view state in sync with browser back/forward navigation.
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const replayId = params.get("replay");
-
-    if (replayId) {
-      console.log("Replay detected:", replayId);
-      setActivePage("replay");
-    }
+    const onPopState = () => {
+      startTransition(() => setActivePage(pageFromLocation()));
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
   }, []);
-  // Trigger brief fake loading to demonstrate pristine loading skeletons
+
   const handlePageChange = (page: PageId) => {
+    const path = PAGE_TO_PATH[page];
+    if (window.location.pathname !== path) {
+      window.history.pushState({}, "", path);
+    }
     startTransition(() => {
       setActivePage(page);
     });

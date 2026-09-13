@@ -172,7 +172,7 @@ export default function AgentConsoleView() {
               What should the <span className="text-gradient-clay">agent</span> do?
             </h1>
             <p className="mt-3 text-sm sm:text-base text-coal-500 dark:text-cream-400 max-w-2xl">
-              Describe a goal in plain English. AgentOS plans a workflow and takes action across your connected
+              Describe a goal. AgentOS plans a workflow and takes action across your connected
               apps - Slack, Gmail, Notion, GitHub, Calendar and more.
             </p>
 

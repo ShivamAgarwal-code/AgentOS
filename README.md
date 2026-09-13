@@ -4,7 +4,7 @@
 
 ### One AI agent that takes action across all your apps
 
-**Describe a goal in plain English. AgentOS plans a multi-step workflow with Claude Opus 4.8 and executes it across your connected apps - Slack, Gmail, Notion, GitHub, Calendar, Linear and 17 more - streaming a live action trace.**
+**Describe a goal. AgentOS plans a multi-step workflow with Claude Opus 4.8 and executes it across your connected apps - Slack, Gmail, Notion, GitHub, Calendar, Linear and 17 more - streaming a live action trace.**
 
 ### 🔗 [Live demo](https://agentos-7xfk.onrender.com/)
 
@@ -75,7 +75,7 @@ A timeline of every action the agent has taken across your apps - per-app result
 ## 🧠 How it works
 
 ```
-                Goal (plain English)
+                      Goal
                         |
                         v
         +-------------------------------+     builds a toolset from
