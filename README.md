@@ -6,7 +6,7 @@
 
 **Describe a goal in plain English. AgentOS plans a multi-step workflow with Claude Opus 4.8 and executes it across your connected apps - Slack, Gmail, Notion, GitHub, Calendar, Linear and 17 more - streaming a live action trace.**
 
-### 🔗 [Live demo →  agentos-7xfk.onrender.com](https://agentos-7xfk.onrender.com/)
+### 🔗 [Live demo](https://agentos-7xfk.onrender.com/)
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-agentos.onrender.com-D97757)](https://agentos-7xfk.onrender.com/)
 [![Claude](https://img.shields.io/badge/Brain-Claude%20Opus%204.8-D97757)](https://www.anthropic.com)
